@@ -1,25 +1,52 @@
-# Pinned to what actually ran on TinyGPU. The version pins are not
-# decoration -- see the notes.
+# DO NOT `pip install -r` this into an environment that already works.
+#
+# The working venv on woody (~/projects/Pose2Sim/.venv, python 3.12.0) has
+# numpy 2.5.2 / scipy 1.18.1 / cv2 5.0.0 / torch 2.14.1 and runs fine.
+# Hard-pinning older versions here would DOWNGRADE that venv and break it.
+# Use this file to build a NEW environment, not to "fix" an existing one.
+#
+# What actually matters is not a specific version but one pairing:
+#
+#     numpy >= 2.0  must go with  scipy >= 1.14
+#     numpy <  2.0  must go with  scipy <  1.14
+#
+# Mismatch that pairing and you get `AttributeError: np.long` from deep
+# inside Pose2Sim, which looks like a Pose2Sim bug and is not one.
+# hpc/verify_hpc.py checks the pairing explicitly, so run that instead of
+# trusting the version numbers by eye.
+#
+# Known-good combinations:
+#   python 3.12 + numpy 2.5 + scipy 1.18 + cv2 5.0   (woody, Oct 2026)
+#   python 3.10 + numpy 1.26 + scipy 1.11 + cv2 4.10 (tinygpu, Sep 2026)
 
 Pose2Sim
-numpy==1.26.4
-scipy==1.11.4
-# scipy >= 1.14 needs numpy >= 2.0. A ~/.local scipy 1.18.0 sitting on top of
-# numpy 1.26.4 gives `AttributeError: np.long` from inside Pose2Sim. Set
-# PYTHONNOUSERSITE=1 in job scripts so ~/.local cannot shadow the venv.
 
-opencv-python==4.10.0.84
-opencv-contrib-python==4.10.0.84   # needed for cv2.aruco (ChArUco)
-rtoml                              # Pose2Sim reads Config/calibration TOML
+numpy>=1.26
+scipy>=1.11
+
+opencv-python>=4.7          # CharucoDetector needs >= 4.7
+opencv-contrib-python>=4.7  # cv2.aruco lives here, not in the base package
+rtoml
 pyyaml
 # pyyaml missing makes common.py fall back to a nonexistent relative path
 # SILENTLY, and calibration "detects 0 frames" with no error. Install it.
 
-mediapipe==0.10.35
-toml
 pandas
 matplotlib
 
-# animation only
-torch                              # 2.12.1+cpu locally, CUDA build on cluster
-py-soma-x                          # NVIDIA SOMA, wraps MHR (Meta Human Rig)
+# --- face work only -------------------------------------------------------
+mediapipe
+# Also needs the model file, which pip does not ship:
+#   face_landmarker.task  (~3.8 MB) -> ~/models/face_landmarker.task
+
+# --- animation only (cluster) ---------------------------------------------
+# torch                     # install the build matching the node's CUDA
+# py-soma-x                 # NVIDIA SOMA, wraps MHR; assets are gated
+
+# --- GPU pose estimation --------------------------------------------------
+# On a GPU node, swap the CPU onnxruntime for the GPU build:
+#   pip uninstall -y onnxruntime && pip install onnxruntime-gpu
+# Verify it took effect with hpc/verify_hpc.py: the providers line must
+# list CUDA. A CPU-only onnxruntime on a GPU node silently runs on CPU and
+# you pay for an idle GPU, which is exactly what happened to the SOMA jobs
+# (5-16% utilisation).
