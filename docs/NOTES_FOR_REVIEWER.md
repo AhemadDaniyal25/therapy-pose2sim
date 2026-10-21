@@ -5,9 +5,9 @@ Written for a colleague joining the project, 2026-10-20. The cluster
 right now. This repo is the code plus the reasoning, so you can read and
 critique it before we next have hardware.
 
-You can paste this file plus the scripts into your own Claude session and ask
-it to work through them with you. The questions at the bottom are the ones I
-most want a second opinion on.
+Read this alongside the scripts, which carry their reasoning in the
+docstrings. The questions at the bottom are the ones I most want a second
+opinion on.
 
 ---
 
