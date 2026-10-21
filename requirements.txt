@@ -1,0 +1,25 @@
+# Pinned to what actually ran on TinyGPU. The version pins are not
+# decoration -- see the notes.
+
+Pose2Sim
+numpy==1.26.4
+scipy==1.11.4
+# scipy >= 1.14 needs numpy >= 2.0. A ~/.local scipy 1.18.0 sitting on top of
+# numpy 1.26.4 gives `AttributeError: np.long` from inside Pose2Sim. Set
+# PYTHONNOUSERSITE=1 in job scripts so ~/.local cannot shadow the venv.
+
+opencv-python==4.10.0.84
+opencv-contrib-python==4.10.0.84   # needed for cv2.aruco (ChArUco)
+rtoml                              # Pose2Sim reads Config/calibration TOML
+pyyaml
+# pyyaml missing makes common.py fall back to a nonexistent relative path
+# SILENTLY, and calibration "detects 0 frames" with no error. Install it.
+
+mediapipe==0.10.35
+toml
+pandas
+matplotlib
+
+# animation only
+torch                              # 2.12.1+cpu locally, CUDA build on cluster
+py-soma-x                          # NVIDIA SOMA, wraps MHR (Meta Human Rig)

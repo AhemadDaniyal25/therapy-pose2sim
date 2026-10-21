@@ -1,0 +1,71 @@
+# Pose2Sim Config.toml -- only the keys that mattered, with why.
+# Copy the full Config.toml from the Pose2Sim install and change these.
+
+[project]
+multi_person = false
+# true measured WORSE on this data: 23.0 px vs 16.9 px, cam2 excluded 100%
+# of the time, and it still only tracked one person. The fix for two people
+# is scripts/split_main.py (one person per project), not this flag.
+
+frame_range = []          # [] = all frames
+
+[pose]
+pose_model = 'Whole_body'
+# 'Whole_body' -> RTMW (rtmw-dw-x-l_simcc-cocktail14_270e-256x192)
+#              -> COCO_133 = 17 body + 6 feet + 68 face + 42 hands
+#
+# This is how fingers and face keypoints get into Pose2Sim. There is no
+# separate finger or face stage to add -- changing pose_model IS the answer
+# to "add fingers" and "can Pose2Sim have face keypoints".
+#
+# 'Body_with_feet' -> RTMPose, HALPE-26. Faster, no face, no hands.
+#
+# Honest caveat: we chose on required keypoints, not on a controlled
+# accuracy comparison between the two. We have not run that comparison.
+
+mode = 'balanced'
+det_frequency = 1
+
+[synchronization]
+do_synchronization = true
+# NEVER turn this off. It was false in the config we inherited and it was
+# the single biggest bug in the project. Real measured offsets were 136
+# frames (4.5 s) main-left and 113 frames (3.8 s) main-right -- the cameras
+# were started by hand. Triangulation was intersecting rays cast at
+# different instants: 21 of 22 markers came out NaN, reprojection 31.1 px.
+# With sync on: 16.9 px, 22/22 markers valid.
+#
+# READ THE LOG. You want a small offset at HIGH correlation (we got 2 and 6
+# frames at 0.92 for the split projects). A large offset at low correlation
+# (0.5-0.6) means it latched onto the wrong person or the wrong motion -- it
+# does not mean your cameras were really 4.5 s apart.
+
+keypoints_to_consider = 'all'
+approx_time_maxspeed = 'auto'
+time_range_around_maxspeed = 2.0
+
+[personAssociation]
+likelihood_threshold_association = 0.3
+
+[personAssociation.single_person]
+reproj_error_threshold_association = 20
+tracked_keypoint = 'Nose'
+# 'Neck' is NOT in COCO_133. Pose2Sim falls back to 'Nose' silently if you
+# set it, so set it explicitly and avoid the surprise.
+
+[triangulation]
+reproj_error_threshold_triangulation = 15
+likelihood_threshold_triangulation = 0.3
+min_cameras_for_triangulation = 2
+interpolation = 'cubic'
+interp_if_gap_smaller_than = 10
+# Watch the "excluded %" per camera in the log. 84% exclusion on one camera
+# (which is what the 3-camera project gave) means the geometry disagrees,
+# not that the camera is noisy.
+
+[filtering]
+type = 'butterworth'
+
+[filtering.butterworth]
+order = 4
+cut_off_frequency = 6

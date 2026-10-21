@@ -1,0 +1,16 @@
+# generated outputs
+pose/
+pose-sync/
+pose-associated/
+pose-3d/
+*.trc
+*.c3d
+*.mp4
+*.npz
+*.avi
+logs/
+__pycache__/
+*.pyc
+.venv/
+# keep the broken calibration as evidence, ignore the rest of the bulk
+videos/
