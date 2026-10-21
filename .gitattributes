@@ -1,0 +1,15 @@
+# Shell scripts and Slurm files MUST keep LF endings. Git on Windows
+# converts to CRLF in the working copy, and if a CRLF version ever gets
+# committed the cluster fails with:
+#
+#     bash: $'\r': command not found
+#     /usr/bin/env: 'python3\r': No such file or directory
+#
+# which looks like a broken script and is actually a line-ending problem.
+*.sh      text eol=lf
+*.slurm   text eol=lf
+*.py      text eol=lf
+*.toml    text eol=lf
+*.md      text eol=lf
+
+# keep the executable bit on the things that get run
