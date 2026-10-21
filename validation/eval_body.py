@@ -118,7 +118,8 @@ def main():
         ok = lo <= med <= hi
         in_range += ok
         cvs.append(cv)
-        verdict = ("pass" if cv < CV_PASS else
+        verdict = ("SCALE" if not ok else
+                   "pass" if cv < CV_PASS else
                    "fail" if cv > CV_FAIL else "marginal")
         print(f"{label:<14}{med:9.3f}{f'{lo:.2f}-{hi:.2f}':>14}"
               f"{'yes' if ok else 'NO':>5}{cv:9.3f}{verdict:>10}")
@@ -130,6 +131,8 @@ def main():
     print(f"\n{in_range}/{len(BONES)} bones within anatomical range")
     print(f"median robust CV = {med_cv:.3f}  "
           f"({'pass' if med_cv < CV_PASS else 'fail' if med_cv > CV_FAIL else 'marginal'})")
+    if in_range == 0:
+        print("OVERALL: NOT metrically valid. Low CV means smooth, not correct.")
 
     if in_range < len(BONES) and med_cv < CV_PASS:
         print("\nLow CV with bones out of range = consistent but mis-scaled "
