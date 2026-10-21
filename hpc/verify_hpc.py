@@ -146,8 +146,10 @@ def main():
     check_import("soma", required=False, note="(py-soma-x, MHR assets)")
 
     print("\n--- external binaries -------------------------------------")
-    for exe, why, req in (("ffmpeg", "split_main.py", True),
-                          ("ffprobe", "frame-rate checks", True),
+    # None of these are required any more: split_main.py falls back to cv2
+    # for both cropping and probing, because woody has no ffmpeg module.
+    for exe, why, req in (("ffmpeg", "faster cropping; cv2 fallback exists", False),
+                          ("ffprobe", "frame-rate checks; cv2 fallback exists", False),
                           ("sbatch", "job submission", False)):
         p = shutil.which(exe)
         if p:
@@ -172,10 +174,13 @@ def main():
         for p in (Path.home(), woody):
             if p.exists():
                 t = sh.disk_usage(p)
-                line(OK, f"space {p.name}",
-                     f"{t.used/1e9:.0f}G used / {t.total/1e9:.0f}G")
+                line(OK, f"fs holding {p.name}",
+                     f"{t.used/1e9:.0f}G of {t.total/1e9:.0f}G "
+                     "(whole filesystem, NOT your quota)")
     except Exception as e:
         line(WARN, "disk usage", str(e))
+    print("      your real limits are in the quota block of any job log,"
+          "\n      or run: quota -s")
 
     if args.calib:
         print("\n--- calibration -------------------------------------------")

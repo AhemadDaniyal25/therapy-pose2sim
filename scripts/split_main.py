@@ -36,6 +36,7 @@ outside the right-hand crop.  Do not "fix" it.  fx, fy, cy, and all
 distortion coefficients are unchanged: cropping does not alter the lens.
 """
 
+import shutil
 import subprocess
 from pathlib import Path
 import numpy as np
@@ -50,26 +51,86 @@ ROOT      = Path.home() / "projects"
 HALF_W, FULL_H = 960, 1080
 
 
-def crop(side: str, out: Path):
-    """ffmpeg crop. -c:v libx264 -crf 18 keeps it visually lossless enough
-    for pose estimation while staying small."""
+def _probe(path: Path):
+    """Replaces ffprobe. cv2 is already a hard dependency, ffprobe is not,
+    and there is no ffmpeg module on woody."""
+    cap = cv2.VideoCapture(str(path))
+    info = dict(w=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                h=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+                fps=float(cap.get(cv2.CAP_PROP_FPS)),
+                n=int(cap.get(cv2.CAP_PROP_FRAME_COUNT)))
+    cap.release()
+    return info
+
+
+def crop_ffmpeg(side: str, out: Path) -> bool:
+    """Preferred when ffmpeg exists: faster and better quality. Returns
+    False if ffmpeg is unavailable so the caller can fall back."""
+    if shutil.which("ffmpeg") is None:
+        return False
     x = 0 if side == "L" else HALF_W
     out.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        "ffmpeg", "-y", "-i", str(SRC_VIDEO),
-        "-filter:v", f"crop={HALF_W}:{FULL_H}:{x}:0",
-        "-c:v", "libx264", "-crf", "18", "-preset", "medium",
-        "-an", str(out),
-    ]
+    cmd = ["ffmpeg", "-y", "-i", str(SRC_VIDEO),
+           "-filter:v", f"crop={HALF_W}:{FULL_H}:{x}:0",
+           "-c:v", "libx264", "-crf", "18", "-preset", "medium",
+           "-an", str(out)]
     subprocess.run(cmd, check=True)
-    # verify, do not trust
-    cap = cv2.VideoCapture(str(out))
+    return True
+
+
+def crop_cv2(side: str, out: Path):
+    """Fallback with no external binaries. Slower and re-encodes with
+    whatever codec cv2 has (usually mp4v), which is fine for pose
+    estimation: RTMPose sees decoded frames either way."""
+    x0 = 0 if side == "L" else HALF_W
+    out.parent.mkdir(parents=True, exist_ok=True)
+    cap = cv2.VideoCapture(str(SRC_VIDEO))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.release()
-    assert (w, h) == (HALF_W, FULL_H), f"{out.name}: got {w}x{h}"
-    print(f"{out.name}: {w}x{h}, {n} frames")
+    if w < x0 + HALF_W:
+        raise SystemExit(f"source is {w}px wide, cannot crop at x={x0}")
+    vw = cv2.VideoWriter(str(out), cv2.VideoWriter_fourcc(*"mp4v"),
+                         fps, (HALF_W, FULL_H))
+    if not vw.isOpened():
+        raise SystemExit(f"cv2 could not open a writer for {out}")
+    n = 0
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+        vw.write(frame[0:FULL_H, x0:x0 + HALF_W])
+        n += 1
+        if n % 500 == 0:
+            print(f"  {n} frames", flush=True)
+    cap.release(); vw.release()
+    if n == 0:
+        raise SystemExit(f"wrote 0 frames from {SRC_VIDEO}")
+    print(f"  cv2 wrote {n} frames")
+
+
+def crop(side: str, out: Path):
+    if not SRC_VIDEO.exists():
+        raise SystemExit(f"source video not found: {SRC_VIDEO}")
+    src = _probe(SRC_VIDEO)
+    print(f"source: {src['w']}x{src['h']} @ {src['fps']:.3f} fps, "
+          f"{src['n']} frames")
+    if src["w"] != 2 * HALF_W:
+        print(f"  WARNING expected width {2*HALF_W}, got {src['w']}")
+
+    if crop_ffmpeg(side, out):
+        print("  (used ffmpeg)")
+    else:
+        print("  ffmpeg not on PATH, using cv2")
+        crop_cv2(side, out)
+
+    # verify, do not trust
+    got = _probe(out)
+    assert (got["w"], got["h"]) == (HALF_W, FULL_H), \
+        f"{out.name}: got {got['w']}x{got['h']}"
+    if got["n"] and src["n"] and abs(got["n"] - src["n"]) > 2:
+        print(f"  WARNING frame count {got['n']} != source {src['n']}")
+    print(f"{out.name}: {got['w']}x{got['h']}, {got['n']} frames, "
+          f"{got['fps']:.3f} fps")
 
 
 def calib(side: str, out_toml: Path):

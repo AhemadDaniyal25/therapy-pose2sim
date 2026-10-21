@@ -147,9 +147,9 @@ silently falls back to `Nose`.
 - **Extrinsics are not independently verified.** `all_cameras.npz` was imported
   by `ali_repo/scripts/import_reference_calibration.py` from an external
   reference codebase, not computed from this footage. Its `rms` field holds
-  `mean_translation_residual` **in metres** (0.636 m main↔left), 0.572 m
-  main↔right) despite the key name, on 2.4 m and 3.1 m baselines that is
-  ~20–26% translation error. Do not quote those numbers as pixels.
+  `mean_translation_residual` **in metres** despite the key name: 0.636 m
+  main-left on a 2.413 m baseline (26.4%) and 0.572 m main-right on 3.066 m
+  (18.6%). Do not quote those numbers as pixels.
 - **They also cannot be recomputed from the available footage.**
   `validation/covisibility.py` scanned 28:00–37:30 at 3 fps across all three
   cameras: the board was visible at ≥12 corners in **0 frames** for main+left

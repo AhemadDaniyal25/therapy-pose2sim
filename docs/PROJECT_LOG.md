@@ -30,8 +30,8 @@ np.savez(..., rms=np.float64(residual))
 ```
 
 The npz key `rms` holds a **translation residual in metres**, not a pixel
-RMS. So main↔left = 0.636 m on a ~3.1 m baseline (~21%) and main↔right =
-0.572 m on ~2.4 m (~24%). I had called these "sub-pixel", that was wrong
+RMS. So main-left = 0.636 m on a 2.413 m baseline (26.4%) and main-right =
+0.572 m on 3.066 m (18.6%). I had called these "sub-pixel", that was wrong
 and is corrected everywhere in this repo. Same file gave the camera name
 mapping: cam0_main→main, cam1_doctor→**right**, cam2_patient→**left**.
 
@@ -184,3 +184,18 @@ cluster access. Scripts are the versions that produced the numbers above;
 `validation/face3d_both.py` and `scripts/split_main.py` were tidied for
 readability during assembly and have not been re-executed since, re-run
 them before trusting them on new data.
+
+
+**2026-10-21. Baselines were swapped in my own notes.** `verify_hpc.py` read
+them straight from the npz: main-left 2.413 m, main-right 3.066 m. I had
+written them the other way round, which put the relative errors at 21% and
+24% instead of 26.4% and 18.6%. The correction matters because it reverses
+which pair is worse: main-left is, and Person A (the left camera's subject)
+is the one that comes out worse on body reprojection, bone CV, face
+reprojection and biocular width. The numbers now point the same direction as
+the evidence instead of mildly against it.
+
+Same class of mistake as the swapped baselines found in `recalibrate.py`
+earlier. Left/right got transposed twice in this project, in two different
+places. Worth stating the convention once and checking against it rather
+than re-deriving it each time: cam1_doctor is RIGHT, cam2_patient is LEFT.

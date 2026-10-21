@@ -75,10 +75,15 @@ print(f"  (pairs={num_pairs}, residual={residual:.4f} m)")
 
 So:
 
-| pair | value | baseline | relative error |
+| pair | residual | baseline | relative error |
 |---|---|---|---|
-| main ↔ left | 0.6364 **m** | ~3.1 m | ~21% |
-| main ↔ right | 0.5718 **m** | ~2.4 m | ~24% |
+| main to left | 0.6364 **m** | 2.413 m | **26.4%** |
+| main to right | 0.5718 **m** | 3.066 m | **18.6%** |
+
+(Baselines read straight out of the npz by `hpc/verify_hpc.py`. An earlier
+version of this file had them the wrong way round, which made main-left
+look like the better-calibrated pair. It is the worse one, and that is
+consistent with everything else below.)
 
 Not sub-pixel). I reported these as pixels at first and it was wrong (do not
 repeat it), and correct it anywhere it still says "0.57 px" (including the
