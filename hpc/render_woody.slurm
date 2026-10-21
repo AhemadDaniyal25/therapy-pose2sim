@@ -38,7 +38,7 @@ python -u "$REPO/hpc/verify_hpc.py" || true   # torch/soma are optional here
 # 86.8G of a 104.9G soft quota on 19 Oct. When that quota is exceeded, cp
 # and sed fail SILENTLY: a 0-byte backup, "sed: couldn't flush". Writing
 # large outputs to $HOME is how you lose an afternoon.
-export OUT_DIR="/home/woody/iwso/$USER/animation"
+export OUT_DIR="/home/woody/iwso/${USER:-$(id -un)}/animation"
 mkdir -p "$OUT_DIR"
 
 python -u "$REPO/animation/soma_video.py" "$TAG" "$START" "$NF"

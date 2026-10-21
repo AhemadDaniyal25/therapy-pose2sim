@@ -145,3 +145,36 @@ Still useful, and worth saying so he doesn't feel blocked:
   glob.glob('**/*.py',recursive=True)]"`, confirms nothing is broken
 
 Everything past that needs `all_cameras.npz` at minimum.
+
+
+## Cluster gotcha: `module` is a shell function
+
+On woody the system python is **3.6.8** (AlmaLinux8), far below the 3.10
+this needs. A newer one comes from the module system, but `module` is a
+shell function sourced from `/etc/profile.d`, not a binary on `PATH`. In a
+non-login shell it simply does not exist, so a `command -v module` test
+returns false and any script relying on it silently falls through to the
+system python.
+
+Symptom:
+
+    $ bash hpc/setup_hpc.sh
+    using: /usr/bin/python3  (Python 3.6.8)
+    need python >= 3.10, got 3.6
+
+Run it as a login shell:
+
+    bash -l hpc/setup_hpc.sh
+
+`setup_hpc.sh` now also sources the module init itself and prints whether
+`module` is available, so the failure is visible rather than silent. It
+enumerates the available python modules, loads the newest that satisfies the
+version floor, and if none does it says so and tells you what to try.
+
+Reusing a venv you already built is faster than making another:
+
+    VENV=$HOME/projects/Pose2Sim/.venv bash -l hpc/setup_hpc.sh
+
+Also note `python` does not exist on AlmaLinux8, only `python3`. Inside an
+activated venv both work, which is why the scripts call `python` and the
+Slurm templates activate the venv before doing anything.
