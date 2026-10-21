@@ -10,7 +10,7 @@ nothing runs without the calibration files, which are not in this repo.**
 | part | Windows? | notes |
 |---|---|---|
 | `scripts/make_calib_v2.py` | yes | needs `all_cameras.npz` (see below) |
-| `scripts/split_main.py` | yes | needs `ffmpeg` on PATH |
+| `scripts/split_main.py` | yes | ffmpeg optional, cv2 fallback |
 | `scripts/run_pose2sim.py` | yes | CPU works, slowly, see below |
 | `scripts/find_axes.py`, `overlay_full.py` | yes | |
 | `validation/eval_body.py` | yes | pure numpy, runs on anything |

@@ -1,7 +1,12 @@
 # therapy-pose2sim
 
-Pose2Sim applied to the three-camera therapy-room recording, plus multi-camera
-3D face fusion and a parametric-body animation layer.
+3D human pose estimation from three calibrated cameras in a therapy room,
+using Pose2Sim, plus multi-camera 3D face keypoint fusion.
+
+The focus of this repo is the pose and face reconstruction and its
+validation. There is also an animation layer under `animation/`, which was
+explicitly deprioritised by the supervisor and is exploratory: treat it as a
+side experiment, not a result.
 
 This repo holds the work that is **not** in
 [`therapy-room-pose-pipeline`](https://github.com/AhemadDaniyal25/therapy-room-pose-pipeline)
